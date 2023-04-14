@@ -65,18 +65,14 @@ class DB_Manager(object):
 
     def get_columns_from_table_name(self, table_name_key):
         table_name = self.config.get_configuration(table_name_key, "TABLE")
-        self.cursor.execute("SHOW COLUMNS FROM %s" % table_name)
+        self.cursor.execute(f"SHOW COLUMNS FROM {table_name}")
         return [data['Field'] for data in self.cursor.fetchall()]
 
     def insert_many_sql_query(self, table_name_key, column_keys, data, primary_key=True):
         table_name = self.config.get_configuration(table_name_key, "TABLE")
-        if primary_key:
-            columns = ', '.join(column_keys)
-            values = ", ".join(["%s" for i in range(len(data[0]))])
-        else:
-            columns = ', '.join(column_keys[1:])
-            values = ", ".join(["%s" for i in range(len(data[0]))])
-        sql = "INSERT IGNORE INTO " + table_name + " (" + columns + ") VALUES (" + values + ")"
+        columns = ', '.join(column_keys) if primary_key else ', '.join(column_keys[1:])
+        values = ", ".join(["%s" for _ in range(len(data[0]))])
+        sql = f"INSERT IGNORE INTO {table_name} ({columns}) VALUES ({values})"
         print(sql)
         try:
             self.cursor.executemany(sql, data)
@@ -87,13 +83,9 @@ class DB_Manager(object):
 
     def insert_one_sql_query(self, table_name_key, column_keys, data, primary_key=True):
         table_name = self.config.get_configuration(table_name_key, "TABLE")
-        if primary_key:
-            columns = ', '.join(column_keys)
-            values = ", ".join(["%s" for i in range(len(data[0]))])
-        else:
-            columns = ', '.join(column_keys[1:])
-            values = ", ".join(["%s" for i in range(len(data[0]))])
-        sql = "INSERT IGNORE INTO " + table_name + " (" + columns + ") VALUES (" + values + ")"
+        columns = ', '.join(column_keys) if primary_key else ', '.join(column_keys[1:])
+        values = ", ".join(["%s" for _ in range(len(data[0]))])
+        sql = f"INSERT IGNORE INTO {table_name} ({columns}) VALUES ({values})"
         print(sql)
         for query in data:
             try:
@@ -115,8 +107,10 @@ class DB_Manager(object):
                     if existing_offer['code'] == offer['code']
                 )
                 offers_pivot_data.append((product['id'], offer_id))
-            for category in product['categories']:
-                categories_pivot_data.append((product['id'], category['id']))
+            categories_pivot_data.extend(
+                (product['id'], category['id'])
+                for category in product['categories']
+            )
         return offers_pivot_data, categories_pivot_data
 
     def link_offers(self, data):
@@ -129,9 +123,9 @@ class DB_Manager(object):
 
     def get_all_existing_offers(self, table_name_key):
         table_name = self.config.get_configuration(table_name_key, "TABLE")
-        self.cursor.execute('SELECT `id`, `code` FROM `%s`' % table_name)
+        self.cursor.execute(f'SELECT `id`, `code` FROM `{table_name}`')
         num_rows = self.cursor.rowcount
-        print("Total Offers: {}".format(num_rows))
+        print(f"Total Offers: {num_rows}")
         rows = self.cursor.fetchall()
         if self.cursor.rowcount == 0:
             exit("No offers present")

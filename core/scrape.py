@@ -38,8 +38,7 @@ class Scrape(object):
     def request_data(url, query_string):
         r = requests.get(url, params=query_string)
         if r.ok:
-            data = r.json()
-            return data
+            return r.json()
         print("Some issue with requesting the page.")
         return False
 
@@ -106,10 +105,9 @@ class Scrape(object):
     @staticmethod
     def clean_categories_data(data):
         categories = []
-        index = 0
         if not data:
             return []
-        for given_category in data:
+        for index, given_category in enumerate(data):
             category = {
                 "id": given_category['id'],
                 "name": given_category['name'],
@@ -117,7 +115,6 @@ class Scrape(object):
                 "new_url": given_category['newurl'],
                 "priority": index
             }
-            index += 1
             categories.append(category)
         return categories
 
@@ -127,25 +124,24 @@ class Scrape(object):
         product['categories'] = categories
 
     def scrape(self, url, query_string, rate_limit_time_interval=2):
-        data = self.request_data(url, query_string)
-        if data:
-            print("Processing incoming data")
-            products = self.clean_data(data)
-            for product in products:
-                print("Product with name %s about to process" % product['name'])
-                sleep(rate_limit_time_interval)
-                offers_data = self.get_offers_data(self.get_offer_url(product['id']))
-                categories_data = self.get_categories_data(product['new_url'])[:-1]
-                if not offers_data:
-                    continue
-                if not categories_data:
-                    continue
-                offers = self.clean_offers_data(offers_data)
-                categories = self.clean_categories_data(categories_data)
-                print("Product with name %s processed" % product['name'])
-                self.append_sub_data_to_product(product, offers, categories)
-            return products
-        return False
+        if not (data := self.request_data(url, query_string)):
+            return False
+        print("Processing incoming data")
+        products = self.clean_data(data)
+        for product in products:
+            print(f"Product with name {product['name']} about to process")
+            sleep(rate_limit_time_interval)
+            offers_data = self.get_offers_data(self.get_offer_url(product['id']))
+            categories_data = self.get_categories_data(product['new_url'])[:-1]
+            if not offers_data:
+                continue
+            if not categories_data:
+                continue
+            offers = self.clean_offers_data(offers_data)
+            categories = self.clean_categories_data(categories_data)
+            print(f"Product with name {product['name']} processed")
+            self.append_sub_data_to_product(product, offers, categories)
+        return products
 
     def get_all_categories(self):
         if len(self.all_categories) > 0:
@@ -154,12 +150,13 @@ class Scrape(object):
         xpath = '//*[@id="app"]/div/div[5]/div[5]/div[2]'
         r = requests.get(url)
         html_exp = self.find_by_xpath(r.text, xpath)
-        elements = [element for element in html_exp[0].iterlinks()]
+        elements = list(html_exp[0].iterlinks())
         self.all_categories = [
             {
                 "name": element[0].text,
-                "url": "https://catalog.paytm.com" + element[2]
-            } for element in elements
+                "url": f"https://catalog.paytm.com{element[2]}",
+            }
+            for element in elements
         ]
         return self.all_categories
 

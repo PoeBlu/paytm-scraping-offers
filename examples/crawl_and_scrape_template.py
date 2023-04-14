@@ -6,6 +6,7 @@ Simply remove the passage from start to end tags
 
 Start Snippet
 """
+
 import sys
 import os
 
@@ -35,7 +36,7 @@ page_end = 30
 for i in range(page_start, page_end):
     # Write your own logic to meet the needs of your scraping requirements.
 
-    print("Crawling and Scraping for Category: %s" % categories[0]['name'])
+    print(f"Crawling and Scraping for Category: {categories[0]['name']}")
     data = s.scrape(categories[0]['url'], s.get_query_string(page_number=i + 1, sort_type="popular"))
 
     # insert the scraped data to a database.

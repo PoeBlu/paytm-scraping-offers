@@ -24,11 +24,11 @@ class Configurer:
         try:
             value = self.config[section][key]
         except KeyError:
-            print("Key FOR '%s' is not provided in the config.ini file." % key)
+            print(f"Key FOR '{key}' is not provided in the config.ini file.")
             return False
         if value:
             return value
-        print("Something went wrong with %s key." % key)
+        print(f"Something went wrong with {key} key.")
         return False
 
     def write_configuration(self, key, value, section="DATABASE"):
