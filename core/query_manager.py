@@ -8,7 +8,7 @@ class QueryManager:
 
     @staticmethod
     def get_sql_from_filename(filename):
-        abs_filename = config.get_abs_parent_directory() + "/sql_queries/" + filename
+        abs_filename = f"{config.get_abs_parent_directory()}/sql_queries/{filename}"
         with open(abs_filename, 'r') as sql_file:
             sql = sql_file.read()
         return sql
